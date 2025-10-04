@@ -4,6 +4,9 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": "vite",
+  "env": {
+    "VITE_API_BASE_URL": "https://zettanix.in"
+  },
   "routes": [
     {
       "src": "/assets/(.*)",
