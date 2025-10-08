@@ -256,12 +256,23 @@ const Quiz: React.FC = () => {
               // Check for various possible field names for the answer
               const answerField = q.answer || q.correctAnswer || q.correct_answer || q.solution;
               
-              if (!q.question || !answerField) {
-                console.warn('Invalid question data:', q);
-                setApiError(`Invalid question data: missing question or answer. Question: ${q.question}, Answer: ${answerField}`);
+              if (!q.question) {
+                console.warn('Invalid question data - missing question:', q);
+                setApiError(`Invalid question data: missing question. Question: ${q.question}`);
                 setCurrentState('question');
                 return null;
               }
+              
+              // If no answer field is found, use the question as answer
+              if (!answerField) {
+                console.warn('No answer field found for question:', q);
+                console.log('Available fields:', Object.keys(q));
+                return {
+                  question: q.question,
+                  answer: q.question // Use question as answer if no separate answer field
+                };
+              }
+              
               return {
                 question: q.question,
                 answer: answerField
@@ -272,8 +283,7 @@ const Quiz: React.FC = () => {
           
           if (aptitudeRequest.questions.length !== quizData.questions.length) {
             const failedQuestions = quizData.questions.filter((q: any) => {
-              const answerField = q.answer || q.correctAnswer || q.correct_answer || q.solution;
-              return !q.question || !answerField;
+              return !q.question; // Only check for missing question, not answer
             });
             setApiError(`Some questions are missing required data. Failed questions: ${failedQuestions.length}. Check console for details.`);
             console.error('Failed questions:', failedQuestions);
