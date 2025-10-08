@@ -284,18 +284,27 @@ const AssessmentPage = () => {
       
       // Convert questions to the format expected by the API
       const apiQuestions = questions.map(q => {
-        if (!q.question || !q.correctAnswer) {
-          setApiError('Invalid question data: missing question or correctAnswer');
+        // Check for various possible field names for the answer
+        const answerField = q.correctAnswer || q.answer || q.correct_answer || q.solution;
+        
+        if (!q.question || !answerField) {
+          console.warn('Invalid question data:', q);
+          setApiError(`Invalid question data: missing question or answer. Question: ${q.question}, Answer: ${answerField}`);
           return null;
         }
         return {
           question: q.question,
-          answer: q.correctAnswer
+          answer: answerField
         };
       }).filter(Boolean);
       
       if (apiQuestions.length !== questions.length) {
-        setApiError('Some questions are missing required data');
+        const failedQuestions = questions.filter(q => {
+          const answerField = q.correctAnswer || q.answer || q.correct_answer || q.solution;
+          return !q.question || !answerField;
+        });
+        setApiError(`Some questions are missing required data. Failed questions: ${failedQuestions.length}. Check console for details.`);
+        console.error('Failed questions:', failedQuestions);
         return;
       }
       

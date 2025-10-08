@@ -253,21 +253,30 @@ const Quiz: React.FC = () => {
           
           const aptitudeRequest = {
             questions: quizData.questions.map((q: any) => {
-              if (!q.question || !q.answer) {
-                setApiError('Invalid question data: missing question or answer');
+              // Check for various possible field names for the answer
+              const answerField = q.answer || q.correctAnswer || q.correct_answer || q.solution;
+              
+              if (!q.question || !answerField) {
+                console.warn('Invalid question data:', q);
+                setApiError(`Invalid question data: missing question or answer. Question: ${q.question}, Answer: ${answerField}`);
                 setCurrentState('question');
                 return null;
               }
               return {
                 question: q.question,
-                answer: q.answer
+                answer: answerField
               };
             }).filter(Boolean),
             answers: answers.map(answer => String(answer || ''))
           };
           
           if (aptitudeRequest.questions.length !== quizData.questions.length) {
-            setApiError('Some questions are missing required data');
+            const failedQuestions = quizData.questions.filter((q: any) => {
+              const answerField = q.answer || q.correctAnswer || q.correct_answer || q.solution;
+              return !q.question || !answerField;
+            });
+            setApiError(`Some questions are missing required data. Failed questions: ${failedQuestions.length}. Check console for details.`);
+            console.error('Failed questions:', failedQuestions);
             setCurrentState('question');
             return;
           }
@@ -275,6 +284,13 @@ const Quiz: React.FC = () => {
           console.log('Sending aptitude evaluation request:', aptitudeRequest);
           console.log('Quiz data questions:', quizData.questions);
           console.log('Answers array:', answers);
+          console.log('Question validation - Original questions:', quizData.questions.map(q => ({
+            question: q.question,
+            answer: q.answer,
+            correctAnswer: q.correctAnswer,
+            correct_answer: q.correct_answer,
+            solution: q.solution
+          })));
           response = await evaluateAptitude.mutateAsync(aptitudeRequest);
           break;
         case 'coding':
